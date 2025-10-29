@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Match - The Ultimate Card Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.1/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            perspective: 1000px;
+            cursor: pointer;
+            height: 120px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front,
+        .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            font-weight: bold;
+            font-size: 2.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card-front {
+            background: linear-gradient(145deg, #2d4059, #1f2e43);
+            color: #00d4ff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .card-front:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 212, 255, 0.3);
+            border-color: rgba(0, 212, 255, 0.5);
+        }
+
+        .card-back {
+            background: linear-gradient(145deg, #00d4ff, #0099cc);
+            transform: rotateY(180deg);
+            color: white;
+            box-shadow: 0 10px 25px rgba(0, 212, 255, 0.4);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .card.matched .card-front,
+        .card.matched .card-back {
+            background: linear-gradient(145deg, #00ff88, #00cc6f);
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.6);
+            animation: matchGlow 1s ease-in-out;
+        }
+
+        @keyframes matchGlow {
+            0%, 100% { box-shadow: 0 0 40px rgba(0, 255, 136, 0.6); }
+            50% { box-shadow: 0 0 60px rgba(0, 255, 136, 0.9); }
+        }
+
+        .stats-box {
+            background: rgba(29, 53, 87, 0.6);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-title {
+            color: #00d4ff;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5),
+                         0 0 40px rgba(0, 212, 255, 0.3);
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { 
+                text-shadow: 0 0 20px rgba(0, 212, 255, 0.5),
+                             0 0 40px rgba(0, 212, 255, 0.3);
+            }
+            50% { 
+                text-shadow: 0 0 30px rgba(0, 212, 255, 0.8),
+                             0 0 60px rgba(0, 212, 255, 0.5);
+            }
+        }
+
+        .difficulty-btn {
+            transition: all 0.3s ease;
+            background: rgba(29, 53, 87, 0.5);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            color: #00d4ff;
+        }
+
+        .difficulty-btn:hover {
+            transform: translateY(-3px);
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+            box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .difficulty-btn.active {
+            background: linear-gradient(145deg, #00d4ff, #0099cc);
+            color: white;
+            border-color: #00d4ff;
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.5);
+        }
+
+        .game-board {
+            display: grid;
+            gap: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .game-board.medium {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .game-board.hard {
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        .game-board.easy {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .badge-custom {
+            background: rgba(29, 53, 87, 0.6);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(0, 212, 255, 0.4);
+            padding: 10px 18px;
+            border-radius: 25px;
+            color: #00d4ff;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-box {
+            background: linear-gradient(145deg, #1f2e43, #16213e);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-custom {
+            background: linear-gradient(145deg, #00d4ff, #0099cc);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 14px 32px;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.6);
+            background: linear-gradient(145deg, #00e5ff, #00b3e6);
+        }
+
+        .btn-custom:active {
+            transform: translateY(-1px);
+        }
+
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            animation: particleFloat 2s ease-out forwards;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(var(--tx), var(--ty)) scale(0);
+            }
+        }
+
+        .game-over-animation {
+            animation: celebrate 0.6s ease-out;
+        }
+
+        @keyframes celebrate {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                height: 100px;
+            }
+
+            .card-front,
+            .card-back {
+                font-size: 1.8rem;
+            }
+
+            .game-board {
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen flex flex-col items-center justify-center p-4">
+        <!-- Main Container -->
+        <div class="game-container w-full max-w-4xl">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-5xl md:text-6xl font-bold header-title mb-2">
+                    <i class="fas fa-brain mr-2"></i>Memory Match
+                </h1>
+                <p class="text-white text-lg opacity-80">Test your memory skills and beat the challenge!</p>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="stats-box mb-8">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div>
+                        <div class="text-sm opacity-70 text-white mb-1">Moves</div>
+                        <div id="moves" class="badge-custom justify-center w-full">
+                            <i class="fas fa-shuffle"></i>
+                            <span id="moveCount">0</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-sm opacity-70 text-white mb-1">Matches</div>
+                        <div class="badge-custom justify-center w-full">
+                            <i class="fas fa-check-circle"></i>
+                            <span id="matchCount">0</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-sm opacity-70 text-white mb-1">Time</div>
+                        <div class="badge-custom justify-center w-full">
+                            <i class="fas fa-hourglass-end"></i>
+                            <span id="timer" class="timer">0:00</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-sm opacity-70 text-white mb-1">Level</div>
+                        <div class="badge-custom justify-center w-full">
+                            <i class="fas fa-star"></i>
+                            <span id="difficulty">Easy</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Difficulty Selection -->
+            <div class="mb-8 text-center">
+                <p class="text-white text-sm font-semibold mb-4 opacity-80">SELECT DIFFICULTY</p>
+                <div class="flex gap-4 justify-center flex-wrap">
+                    <button class="difficulty-btn active btn btn-outline" onclick="setDifficulty('easy')">
+                        <i class="fas fa-leaf mr-2"></i>Easy (8 Cards)
+                    </button>
+                    <button class="difficulty-btn btn btn-outline" onclick="setDifficulty('medium')">
+                        <i class="fas fa-fire mr-2"></i>Medium (16 Cards)
+                    </button>
+                    <button class="difficulty-btn btn btn-outline" onclick="setDifficulty('hard')">
+                        <i class="fas fa-skull mr-2"></i>Hard (36 Cards)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game Board -->
+            <div class="game-board easy" id="gameBoard"></div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4 justify-center mt-8 flex-wrap">
+                <button class="btn-custom" onclick="resetGame()">
+                    <i class="fas fa-redo mr-2"></i>New Game
+                </button>
+                <button class="btn-custom" onclick="pauseGame()" id="pauseBtn">
+                    <i class="fas fa-pause mr-2"></i>Pause
+                </button>
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="stats-box mt-8">
+                <div class="text-white mb-4">
+                    <h3 class="text-xl font-bold mb-4" style="color: #00d4ff;">
+                        <i class="fas fa-medal mr-2"></i>Best Times
+                    </h3>
+                    <div id="leaderboard" class="space-y-2 text-sm">
+                        <div class="opacity-60">No records yet. Play to set your best time!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <dialog id="gameOverModal" class="modal">
+        <div class="modal-box modal-box max-w-md mx-auto text-center game-over-animation">
+            <h3 class="font-bold text-3xl mb-4" style="color: #00d4ff;">
+                <i class="fas fa-trophy text-yellow-400"></i> Game Complete!
+            </h3>
+            <p class="py-4 text-lg">
+                <span class="font-bold text-2xl text-white">Excellent Work!</span><br>
+                <span id="finalStats" class="text-white opacity-80"></span>
+            </p>
+            <div class="modal-action justify-center gap-4">
+                <button class="btn-custom" onclick="document.getElementById('gameOverModal').close(); resetGame()">
+                    <i class="fas fa-play mr-2"></i>Play Again
+                </button>
+                <button class="btn btn-outline" style="border-color: #00d4ff; color: #00d4ff;" onclick="document.getElementById('gameOverModal').close()">
+                    <i class="fas fa-times mr-2"></i>Close
+                </button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+
+    <!-- Pause Modal -->
+    <dialog id="pauseModal" class="modal">
+        <div class="modal-box modal-box max-w-md mx-auto text-center">
+            <h3 class="font-bold text-2xl mb-4" style="color: #00d4ff;">
+                <i class="fas fa-pause text-yellow-400"></i> Game Paused
+            </h3>
+            <p class="py-4 text-white opacity-80">Take a break! Your progress has been saved.</p>
+            <div class="modal-action justify-center gap-4">
+                <button class="btn-custom" onclick="resumeGame()">
+                    <i class="fas fa-play mr-2"></i>Resume
+                </button>
+                <button class="btn btn-outline" style="border-color: #00d4ff; color: #00d4ff;" onclick="document.getElementById('pauseModal').close(); resetGame()">
+                    <i class="fas fa-home mr-2"></i>Home
+                </button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+
+    <script src="script.js"></script>
+</body>
+</html>
