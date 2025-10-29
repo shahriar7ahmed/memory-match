@@ -15,7 +15,7 @@ Sharpen your focus, test your memory, and enjoy a smooth, modern gaming experien
 - 📱 **Responsive Design** — Works flawlessly on desktop, tablet, and mobile  
 - 🔄 **Restart Anytime** — Reset the game with a single click  
 - 🕹️ **Simple Gameplay** — Flip, match, and win!  
-- 🧠 **Optional Score or Timer System** *(if included in your version)*  
+- 🧠 **Optional Score or Timer System** 
 
 ---
 
@@ -39,3 +39,4 @@ Or, to run it locally:
 1. **Clone this repository**
    ```bash
    git clone https://github.com/<your-username>/memory-match-game.git
+
